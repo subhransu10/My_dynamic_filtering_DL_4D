@@ -86,7 +86,9 @@ def make_loaders(args):
 
     return train_loader, val_loader
 
-
+#converting a collated batch to sparsetensor
+#returns coords,features and labels
+#this function is the input to the Minkowski UNet
 def sparse_tensor_from_batch(batch, device):
     coords, feats, labels = batch
     coords = coords.to(device)
@@ -190,7 +192,7 @@ def save_checkpoint(path, model, optimizer, global_step, best_iou_moving):
         path,
     )
 
-
+#model,loss,optimizer,LR schedule
 def main():
     args = parse_args()
     os.makedirs(args.log_dir, exist_ok=True)
@@ -201,7 +203,7 @@ def main():
 
     model = RMOSUNet(
         in_channels=1,
-        out_channels=args.num_classes,
+        out_channels=args.num_classes, #per-voxel class prediction
         D=3,
         base_channels=Config.BASE_CHANNELS,
     ).to(device)

@@ -8,12 +8,13 @@ import MinkowskiEngine as ME
 
 
 class Config:
-    # CHANGE this if needed, but you already have it set in rmos/config.py
+    # we already set this path in the config.py file
     SEMANTICKITTI_ROOT = "/mnt/d/Subhransu workspace/Dataset/my_kitti_dataset/dataset/sequences"
 
 
 # Official SemanticKITTI learning_map (reduced for training)
 # From semantic-kitti.yaml (static/dynamic mapping)
+# we grouped the raw semantic IDs
 LEARNING_MAP = {
     0: 0,      # "unlabeled"
     1: 0,      # "outlier"
@@ -75,11 +76,11 @@ def load_labels(label_path: Path):
     lbl = np.where(lbl <= MAX_RAW_ID, LEARNING_MAP_ARRAY[lbl], 0)
     return lbl.astype(np.int32)
 
-
+#Voxelization with minkowskiEngine,converting the real-world coordinates to voxel grid indices
 def voxelize(coords, feats, labels, voxel_size: float):
     """
     coords: (N, 3) float32 in meters
-    feats:  (N, C)
+    feats:  (N, C) corresponding intesnity features
     labels: (N,)
     """
     # scale to voxel grid
@@ -105,7 +106,8 @@ def voxelize(coords, feats, labels, voxel_size: float):
 
     return coords_q, feats_q.astype(np.float32), labels_q.astype(np.int32)
 
-
+#each sequence will be processed into npz file
+#subsampling is done to unique voxels by MinkowskiEngine
 def process_sequence(seq_id: str, root_dir: Path, out_root: Path, voxel_size: float):
     seq_dir = root_dir / seq_id
     velo_dir = seq_dir / "velodyne"

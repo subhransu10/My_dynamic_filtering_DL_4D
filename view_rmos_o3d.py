@@ -9,6 +9,7 @@ from .dataset import RMOSNPZDataset
 from .models import RMOSUNet
 
 # WSL / headless: avoid hard-crash attempts
+#since i had some crashes while working on wsl
 if "WSL_DISTRO_NAME" in os.environ:
     os.environ.setdefault("LIBGL_ALWAYS_INDIRECT", "1")
 
