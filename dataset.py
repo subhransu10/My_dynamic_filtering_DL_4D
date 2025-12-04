@@ -55,6 +55,8 @@ def _parse_seq_and_frame(path: str):
     return None, None
 
 
+# rmos/dataset.py (ONLY the RMOSSequenceNPZDataset class)
+
 class RMOSSequenceNPZDataset(Dataset):
     """
     Multi-frame temporal dataset for 4D MinkowskiEngine.
@@ -62,14 +64,22 @@ class RMOSSequenceNPZDataset(Dataset):
 
     Output coords is (N_total, 4) int [x,y,z,t].
     Only current frame keeps labels; past frames labeled -1 (ignored in loss).
+
+    time_feat:
+      - "none": no extra time feature
+      - "scalar": add a scalar time feature t_norm in [0,1]
     """
     def __init__(self, data_root: str, list_path: str,
-                 n_frames: int = 3, frame_stride: int = 1):
+                 n_frames: int = 3,
+                 frame_stride: int = 1,
+                 time_feat: str = "none"):
         super().__init__()
         assert n_frames >= 1
+        assert time_feat in ("none", "scalar")
         self.data_root = data_root
         self.n_frames = n_frames
         self.frame_stride = max(1, frame_stride)
+        self.time_feat = time_feat
 
         with open(list_path, "r") as f:
             self.files = [ln.strip() for ln in f.readlines() if ln.strip()]
@@ -117,6 +127,16 @@ class RMOSSequenceNPZDataset(Dataset):
             tcol = np.full((coords3.shape[0], 1), t_i, dtype=np.int32)
             coords4 = np.concatenate([coords3, tcol], axis=1)  # (N,4)
 
+            # OPTIONAL: append time feature (normalized)
+            if self.time_feat != "none":
+                if self.n_frames > 1:
+                    t_norm = float(t_i) / float(max(1, self.n_frames - 1))
+                else:
+                    t_norm = 0.0
+                t_feat = np.full((feats.shape[0], 1), t_norm, dtype=np.float32)
+                feats = np.concatenate([feats, t_feat], axis=1)  # (N, C+1)
+
+            # only current frame has labels, past frames ignored
             if t_i > 0:
                 labels = np.full_like(labels, -1)  # ignore past frames
 
@@ -129,3 +149,4 @@ class RMOSSequenceNPZDataset(Dataset):
         labels = np.concatenate(all_labels, axis=0)
 
         return coords, feats, labels
+
