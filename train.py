@@ -55,9 +55,9 @@ def parse_args():
     # NEW: loss shaping
     p.add_argument("--use_balanced_loss", action="store_true",
                    help="Use class-balanced CE + moving-class Dice loss.")
-    p.add_argument("--moving_weight", type=float, default=1.5, #was 2.0, if you see drop in performance try to change back to it
+    p.add_argument("--moving_weight", type=float, default=2.0, #was 2.0, if you see drop in performance try to change back to it
                    help="Class weight for the moving class in CE.")
-    p.add_argument("--dice_weight", type=float, default=0.3, #was 1.0
+    p.add_argument("--dice_weight", type=float, default=1.0, #was 1.0
                    help="Lambda for moving-class Dice loss.")
 
     return p.parse_args()
