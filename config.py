@@ -3,10 +3,6 @@ import os
 
 class Config:
     # Path to SemanticKITTI sequences
-<<<<<<< HEAD
-=======
-
->>>>>>> subhransu10/issue1
     SEMANTICKITTI_ROOT = "/mnt/d/Subhransu workspace/Dataset/my_kitti_dataset/dataset/sequences"
 
     # Output root for preprocessed data

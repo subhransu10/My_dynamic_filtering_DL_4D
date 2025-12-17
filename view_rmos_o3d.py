@@ -9,11 +9,6 @@ from .config import Config
 from .dataset import RMOSNPZDataset, RMOSSequenceNPZDataset
 from .models import RMOSUNet, RMOS4DUNet
 
-<<<<<<< HEAD
-# WSL / headless: avoid hard-crash attempts
-#since i had some crashes while working on wsl
-=======
->>>>>>> subhransu10/issue1
 if "WSL_DISTRO_NAME" in os.environ:
     os.environ.setdefault("LIBGL_ALWAYS_INDIRECT", "1")
 

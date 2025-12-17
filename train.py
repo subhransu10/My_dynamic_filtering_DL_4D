@@ -106,12 +106,6 @@ def make_loaders(args):
     print(f"[INFO] Train iters/epoch (approx): {len(train_loader)} | Val iters: {len(val_loader)}", flush=True)
     return train_loader, val_loader
 
-<<<<<<< HEAD
-#converting a collated batch to sparsetensor
-#returns coords,features and labels
-#this function is the input to the Minkowski UNet
-def sparse_tensor_from_batch(batch, device):
-=======
 
 def maybe_subsample(coords, feats, labels, max_points_per_sample: int):
     """Randomly subsample to max_points_per_sample (keeps alignment)."""
@@ -126,7 +120,6 @@ def maybe_subsample(coords, feats, labels, max_points_per_sample: int):
 
 
 def sparse_tensor_from_batch(batch, device, max_points_per_sample=0):
->>>>>>> subhransu10/issue1
     coords, feats, labels = batch
     coords = coords.to(device)
     feats  = feats.to(device)
@@ -233,14 +226,6 @@ def main():
 
     train_loader, val_loader = make_loaders(args)
 
-<<<<<<< HEAD
-    model = RMOSUNet(
-        in_channels=1,
-        out_channels=args.num_classes, #per-voxel class prediction
-        D=3,
-        base_channels=Config.BASE_CHANNELS,
-    ).to(device)
-=======
     # Decide input feature dimension
     if args.n_frames > 1:
         in_channels = 1 if args.time_feat == "none" else 2
@@ -262,7 +247,6 @@ def main():
             base_channels=args.base_channels
         ).to(device)
         print("[INFO] Training 3D model", flush=True)
->>>>>>> subhransu10/issue1
 
     # Loss: either plain CE or balanced CE + moving Dice
     if args.use_balanced_loss:

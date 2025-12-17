@@ -4,14 +4,11 @@ import re
 import numpy as np
 from torch.utils.data import Dataset
 
-<<<<<<< HEAD
 from .config import Config
 
 #loads the npz files *in numpy library npz fle is a zipped archive that stores multiple numpy arrays for motion segmentation (a pytorch dataset),loads much faster than text files and can store multiple arrays
 #in a single file
-=======
 
->>>>>>> subhransu10/issue1
 class RMOSNPZDataset(Dataset):
     """
     Single-frame dataset.
