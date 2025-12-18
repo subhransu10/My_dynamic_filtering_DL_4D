@@ -29,6 +29,13 @@ def parse_args():
     p.add_argument("--val_freq", type=int, default=Config.VAL_FREQ)
     p.add_argument("--print_freq", type=int, default=Config.PRINT_FREQ)
     p.add_argument("--save_freq", type=int, default=5000)
+    p.add_argument("--label_mode", type=str, default="semantic",
+                  choices=["semantic", "mos2"],
+                  help="semantic: use labels as-is (0..num_classes-1). "
+                       "mos2: remap labels to {0 static, 1 moving} using --moving_ids.")
+    p.add_argument("--moving_ids", type=str, default="1",
+                  help="Comma-separated label ids treated as moving when label_mode=mos2. "
+                       "Example: '1' or '10,11,13'.")
 
     # temporal stacking
     p.add_argument("--n_frames", type=int, default=1,
@@ -62,6 +69,21 @@ def parse_args():
 
     return p.parse_args()
 
+def remap_to_mos2(labels: torch.Tensor, moving_ids_csv: str) -> torch.Tensor:
+    """
+    labels: (N,) long on device. Can include -1 ignore.
+    returns: labels in {-1,0,1}
+    """
+    moving_ids = [int(x) for x in moving_ids_csv.split(",") if x.strip() != ""]
+    out = torch.zeros_like(labels)
+    ignore = (labels == -1)
+    if len(moving_ids) > 0:
+        mv = torch.zeros_like(labels, dtype=torch.bool)
+        for mid in moving_ids:
+            mv |= (labels == mid)
+        out[mv] = 1
+    out[ignore] = -1
+    return out
 
 def make_loaders(args):
     train_list = os.path.join(args.data_root, "train.txt")
@@ -119,29 +141,33 @@ def maybe_subsample(coords, feats, labels, max_points_per_sample: int):
     return coords[idx], feats[idx], labels[idx]
 
 
-def sparse_tensor_from_batch(batch, device, max_points_per_sample=0):
+def sparse_tensor_from_batch(batch, device, max_points_per_sample=0, label_mode="semantic", moving_ids="1"):
     coords, feats, labels = batch
     coords = coords.to(device)
     feats  = feats.to(device)
     labels = labels.to(device).long()
 
-    coords, feats, labels = maybe_subsample(
-        coords, feats, labels, max_points_per_sample
-    )
+    coords, feats, labels = maybe_subsample(coords, feats, labels, max_points_per_sample)
+
+    if label_mode == "mos2":
+        labels = remap_to_mos2(labels, moving_ids)
 
     x = ME.SparseTensor(feats, coordinates=coords, device=device)
     return x, labels
 
 
+
 @torch.no_grad()
-def evaluate(model, loader, device, num_classes, max_points_per_sample=0):
+def evaluate(model, loader, device, num_classes, max_points_per_sample=0, label_mode="semantic", moving_ids="1"):
     model.eval()
     total_correct, total_seen = 0, 0
     hist = torch.zeros((num_classes, num_classes), dtype=torch.long)
 
     for batch in loader:
         x, labels = sparse_tensor_from_batch(
-            batch, device, max_points_per_sample=max_points_per_sample
+            batch, device, max_points_per_sample=args.max_points_per_sample,
+            label_mode=args.label_mode,
+            moving_ids=args.moving_ids
         )
         logits = model(x).F
         preds = logits.argmax(1)
@@ -277,7 +303,10 @@ def main():
             global_step += 1
 
             x, labels = sparse_tensor_from_batch(
-                batch, device, max_points_per_sample=args.max_points_per_sample
+                batch, device,
+                max_points_per_sample=args.max_points_per_sample,
+                label_mode=args.label_mode,
+                moving_ids=args.moving_ids
             )
             t_data = time.time() - t_data0
 
